@@ -9,7 +9,6 @@ import pandas as pd
 import joblib
 from flask import Flask, render_template
 
-from flask_bootstrap import Bootstrap5
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
@@ -21,7 +20,6 @@ np.random.seed(42)
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "hard to guess string"
-bootstrap = Bootstrap5(app)
 
 model = keras.models.load_model("fires_model.keras")
 full_pipeline = joblib.load("fires_pipeline.pkl")
