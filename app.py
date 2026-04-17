@@ -13,7 +13,6 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 
-# 반복 줄이기용 별칭
 STRING_FIELD = StringField
 
 np.random.seed(42)
@@ -21,8 +20,15 @@ np.random.seed(42)
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "hard to guess string"
 
-model = keras.models.load_model("fires_model.keras")
-full_pipeline = joblib.load("fires_pipeline.pkl")
+model = None
+full_pipeline = None
+
+def load_assets():
+    global model, full_pipeline
+    if model is None:
+        model = keras.models.load_model("fires_model.keras")
+    if full_pipeline is None:
+        full_pipeline = joblib.load("fires_pipeline.pkl")
 
 
 class LabForm(FlaskForm):
@@ -45,6 +51,7 @@ def index():
 
 @app.route("/prediction", methods=["GET", "POST"])
 def lab():
+    load_assets()
     form = LabForm()
 
     if form.validate_on_submit():
@@ -73,16 +80,7 @@ def lab():
         }
 
         user_df = pd.DataFrame(user_dict)
-
-        print("\n===== USER INPUT DATAFRAME =====")
-        print(user_df)
-        print("\n===== USER INPUT DTYPES =====")
-        print(user_df.dtypes)
-
         X_user = full_pipeline.transform(user_df)
-
-        print("\n===== TRANSFORMED SHAPE =====")
-        print(X_user.shape)
 
         pred = model.predict(X_user, verbose=0)
 
@@ -90,9 +88,6 @@ def lab():
         pred_value = np.exp(raw_log_pred) - 1
         pred_value = max(0, pred_value)
         pred_value = np.round(pred_value, 2)
-
-        print("raw_log_pred =", raw_log_pred)
-        print("restored_area =", pred_value)
 
         return render_template("result.html", prediction=pred_value)
 
